@@ -8,9 +8,10 @@ var models = {
 models.Sensor = mongo.model('Sensor', {
     guid: { type: String, required: true },
     date: { type: Date, default: Date.now },
-    title: { type: String, required: true },
+    title: { type: String, required: false },
     ipv6: { type: String, required: true },
-    category: { type: String, required: true }
+    category: { type: String, required: true },
+    reading: { type: Object, required: false }
 });
 
 models.User = mongo.model('User', {

@@ -3,11 +3,9 @@ const router = express.Router();
 const model = require('../database/models');
 const uuid = require('uuid4');
 const jwt = require('express-jwt');
-var cron = require('node-cron');
-var faker = require('faker');
-const deepstream = require('deepstream.io-client-js');
-
-const client = deepstream('localhost:6020').login();
+const cron = require('node-cron');
+const faker = require('faker');
+const client = require('../database/stream');
 
 router.get('/sensor', function(req, res){
 
@@ -55,14 +53,23 @@ router.post('/sensor', function(req, res) {
     });
 });
 
-cron.schedule('*/5 * * * * *', function(){
+cron.schedule('*/1 * * * * *', function(){
     const localGuid = uuid();
+
+    let category = faker.random.arrayElement(["light","air"]);
 
     const sensor = new model.Sensor({
         guid: localGuid,
         title: "Sensor data",
         ipv6: faker.internet.ipv6().toString(),
-        category: faker.random.arrayElement(["light","air"])
+        category: category,
+        reading: category === 'light' ? {
+                intensity: faker.random.number({ 'min': 0, 'max': 100 })
+            } : {
+                pm03: faker.random.number({ 'min': 0, 'max': 100 }),
+                pm25: faker.random.number({ 'min': 0, 'max': 100 }),
+                pm10: faker.random.number({ 'min': 0, 'max': 100 }),
+            }
     });
     sensor.save(function (err) {
         if (err) {
@@ -75,7 +82,6 @@ cron.schedule('*/5 * * * * *', function(){
             }
 
             client.event.emit( 'iot', data );
-            console.log(200)
         })
 
     });
